@@ -9,7 +9,7 @@ import sys
 from io import StringIO
 import csv
 
-class Scraper:
+class Crawler:
 	conn = None
 	cur = None
 
@@ -40,12 +40,12 @@ class Scraper:
 	def closeCon(self):
 		global conn
 		global cur
-		#conn.close()
+		conn.close()
 
 	#########
 	# Prints and stores content if content does not already exist for that URL and topic
 	#########
-	def storeContent(self, topic, title, body, url):
+	def storeContent(self, topic, site, title, body, url):
 		global conn
 		global cur
 		#Optionally, comment out the print statements if you want this to go straight to
@@ -61,7 +61,7 @@ class Scraper:
 		cur.execute("SELECT * FROM content WHERE url = %s AND topicId = %s", (url, int(topic.id)))
 		if cur.rowcount == 0:
 			try:
-				cur.execute("INSERT INTO content (topicId, title, body, url) VALUES(%s, %s, %s, %s)", (int(topic.id), title, body, url))
+				cur.execute("INSERT INTO content (topicId, siteId, title, body, url) VALUES(%s, %s, %s, %s, %s)", (int(topic.id), int(site.id), title, body, url))
 			except:
 				print("Could not store article")
 			try:
@@ -69,42 +69,42 @@ class Scraper:
 			except:
 				conn.rollback()
 
-	#########
-	# Creates a new topic in the database, if one does not exist. Returns a topic object
-	#
-	##########
-	def getTopicFromName(self, topicName):
+
+	def getSites(self):
 		global conn
 		global cur
-		
-		if topicName is None:
-			return None
-		print("SELECT * FROM topics WHERE name = %s", (topicName))
-		cur.execute("SELECT * FROM topics WHERE name = %s", (topicName))
-		if cur.rowcount == 0:
-			print("INSERT INTO topics (name) VALUES(%s)", (topicName))
-			cur.execute("INSERT INTO topics (name) VALUES(%s)", (topicName))
-			conn.commit()
-			topicId = cur.lastrowid
-		else:
-			topicId = cur.fetchone()['id']
+		cur.execute("SELECT * FROM sites")
+		sitesData = cur.fetchall()
+		allSiteObjs = []
+		for site in sitesData:
+			siteObj = Website(site['id'], site['name'], site['url'], site['searchUrl'], site['resultListing'], site['resultUrl'], site['absoluteUrl'], site['pageTitle'], site['pageBody'])
+			allSiteObjs.append(siteObj)
+		return allSiteObjs
 
-		print("Creating topic with id "+str(topicId)+" and name "+str(topicName))
-		topic = Topic(topicId, topicName)
+	def getTopics(self):
+		global conn
+		global cur
+		cur.execute("SELECT * FROM topics")
+		topicsData = cur.fetchall()
+		allTopicObjs = []
+		for topic in topicsData:
+			topicObj = Topic(topic['id'], topic['name'])
+			allTopicObjs.append(topicObj)
+		return allTopicObjs
 
-		#If not using MySQL, return a dummy topic object. This line should be commented
-		#out if you are using MySQL
-		#topic = Topic(0, topicName, "")
-		return topic
 
 	################
 	# Utilty function used to get a Beautiful Soup object
 	# from a given URL
 	##############
 	def getPage(self, url):
+		print("Retrieving URL:\n"+url)
 		session = requests.Session()
 		headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}
-		req = session.get(url, headers=headers)
+		try:
+			req = session.get(url, headers=headers)
+		except requests.exceptions.RequestException:
+			return None
 		bsObj = BeautifulSoup(req.text)
 		return bsObj
 
@@ -137,57 +137,34 @@ class Scraper:
 				pageObj = self.getPage(url)
 			else:
 				pageObj = self.getPage(site.url+url)
-			title = self.safeGet(pageObj, site.pageTitle)
-			print("Title is "+title)
-			body = self.safeGet(pageObj, site.pageBody)
-			if title != "" and body != "":
-				self.storeContent(topic, title, body, url)
+				
+			if pageObj == None:
+				print("Something is wrong with that page or URL. Skipping")
+			else:
+				title = self.safeGet(pageObj, site.pageTitle)
+				print("Title is "+title)
+				body = self.safeGet(pageObj, site.pageBody)
+				if title != "" and body != "":
+					self.storeContent(topic, site, title, body, url)
 
-	################
-	# Starts a search of a given website for a given topic
-	##############
-	def scrape(self, topicStr, targetSite):
-		global conn
-		global cur
-		#If using MySQL, this will get any stored details about the topic
-		#If not using MySQL, it will essentially do nothing
-		topic = self.getTopicFromName(topicStr)
-		self.search(topic, targetSite)
 
 #####################################################
 ##### "User" code, outside the scraper class ########
 #####################################################
 
-#Get topics.txt, throw an error if it is not provided
-if len(sys.argv) < 2:
-	sys.exit("Must provide a filename to read from")
-
-f = open(sys.argv[1], 'r')
-topicName = f.readline().strip()
-scraper = Scraper()
-scraper.openCon()
-
-#Get a list of sites to search from the sites.csv file
-data = open('sites.csv', 'r').read()
-dataFile = StringIO(data)
-siteRows = csv.reader(dataFile)
-
-#Skip the heder line in the CSV file - the header makes it easy to read,
-#but we don't want to use the column titles as actual site data
-next(siteRows)
-
+crawler = Crawler()
+crawler.openCon()
 #build a list of websites to search, from the CSV file
-sites = []
-for row in siteRows:
-	sites.append(Website(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]))
+sites = crawler.getSites()
+topics = crawler.getTopics()
 
-while(topicName):
-	print("GETTING INFO ABOUT: "+topicName);
+for topic in topics:
+	print("GETTING INFO ABOUT: "+topic.name);
 	for targetSite in sites:
-		scraper.scrape(topicName, targetSite)
-	topicName = f.readline().strip()
+		print("FROM SITE: "+targetSite.name);
+		crawler.search(topic, targetSite)
 
-scraper.closeCon()
+crawler.closeCon()
 
 
 
