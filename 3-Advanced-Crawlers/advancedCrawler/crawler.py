@@ -41,7 +41,10 @@ class Crawler:
 		print("Retrieving URL:\n"+url)
 		session = requests.Session()
 		headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}
-		req = session.get(url, headers=headers)
+		try:
+			req = session.get(url, headers=headers)
+		except requests.exceptions.RequestException:
+			return None
 		bsObj = BeautifulSoup(req.text)
 		return bsObj
 
@@ -68,16 +71,19 @@ class Crawler:
 		for result in searchResults:
 			url = result.select(site.resultUrl)[0].attrs["href"]
 			#Check to see whether it's a relative or an absolute URL
-			
+
 			if(site.absoluteUrl == "TRUE"):
 				pageObj = self.getPage(url)
 			else:
 				pageObj = self.getPage(site.url+url)
-			title = self.safeGet(pageObj, site.pageTitle)
-			print("Title is "+title)
-			body = self.safeGet(pageObj, site.pageBody)
-			if title != "" and body != "":
-				self.printContent(topic, title, body, url)
+			if pageObj == None:
+				print("Something was wrong with that page or URL. Skipping!")
+			else:
+				title = self.safeGet(pageObj, site.pageTitle)
+				print("Title is "+title)
+				body = self.safeGet(pageObj, site.pageBody)
+				if title != "" and body != "":
+					self.printContent(topic, title, body, url)
 
 	################
 	# Starts a search of a given website for a given topic
