@@ -1,4 +1,4 @@
 from urllib.request import urlopen
 
-html = urlopen("https://canvas.harvard.edu/courses/4301")
+html = urlopen("https://oreilly.com")
 print(html.read())

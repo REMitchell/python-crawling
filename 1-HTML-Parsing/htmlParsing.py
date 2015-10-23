@@ -3,7 +3,5 @@ from bs4 import BeautifulSoup
 
 html = urlopen("http://www.oreilly.com/")
 bsObj = BeautifulSoup(html)
-menuList = bsObj.findAll("li", {"role":"menuitem"})
-
-for item in menuList:
-    print(item.get_text())
+image = bsObj.find("img", {"alt":"O'Reilly Media, Inc."})
+print(image.attrs['src'])
