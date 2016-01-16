@@ -105,7 +105,7 @@ class Crawler:
 			req = session.get(url, headers=headers)
 		except requests.exceptions.RequestException:
 			return None
-		bsObj = BeautifulSoup(req.text)
+		bsObj = BeautifulSoup(req.text, "lxml")
 		return bsObj
 
 

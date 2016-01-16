@@ -17,7 +17,6 @@ class ArticleSpider(CrawlSpider):
 		links = response.xpath('//a[starts-with(@href, "/wiki/") and not(contains(@href,":"))]/@href').extract()
 		lastMod = response.xpath('//li[@id="footer-info-lastmod"]/text()')[0].extract()
 		lastMod = lastMod.replace("This page was last modified on ", "")
-		print("LAST MOD: "+lastMod);
 		item['title'] = title
 		item['links'] = links
 		item['lastModified'] = lastMod

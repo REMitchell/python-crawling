@@ -10,7 +10,7 @@ import re
 def getArticle(url):
 	print("URL: "+url)
 	html = urlopen(url)
-	articleObj = BeautifulSoup(html.read())
+	articleObj = BeautifulSoup(html.read(), "lxml")
 	#Get article title. This should have a class name ending in "title"
 	title = articleObj.find("h1").get_text()
 
@@ -35,7 +35,7 @@ for i in range(0, 10):
 	print("Scraping page: "+str(start)+" of articles")
 	url = "http://www.brookings.edu/research/commentary?topic=Business%20and%20Finance&start="+start+"&sort=ContentDate"
 	html = urlopen(url)
-	listingObj = BeautifulSoup(html.read())
+	listingObj = BeautifulSoup(html.read(), "lxml")
 	urls = listingObj.findAll("h3", {"class":"title"})
 	for url in urls:
 		newPage = url.find("a").attrs['href']

@@ -30,7 +30,7 @@ def getInternalLinks(bsObj, root):
 def getLinks(pageUrl, root):
     global pages
     html = urlopen(pageUrl)
-    bsObj = BeautifulSoup(html)
+    bsObj = BeautifulSoup(html, "lxml")
     internalLinks = getInternalLinks(bsObj, root)
     print(internalLinks)
     for link in internalLinks:
