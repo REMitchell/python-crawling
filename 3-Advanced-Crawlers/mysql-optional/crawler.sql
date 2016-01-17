@@ -99,3 +99,10 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 ALTER TABLE `topics`
 MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=15;
+
+
+INSERT INTO sites (name,url,searchUrl,resultListing,resultUrl,absoluteUrl,pageTitle,pageBody)
+
+VALUES("Brookings","http://www.brookings.edu","http://www.brookings.edu/search?start=1&q=","ul.search-results li","h3.title a","FALSE","h1","div[itemprop=\"articleBody\"]"),
+
+("Reuters","http://reuters.com","http://www.reuters.com/search/news?blob=","div.search-result-content","h3.search-result-title a","TRUE","h1","span#articleText");
