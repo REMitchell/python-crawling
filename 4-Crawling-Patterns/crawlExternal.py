@@ -36,12 +36,13 @@ def getExternalLinks(bsObj, excludeUrl):
 
 def getRandomExternalLink(startingPage):
     html = urlopen(startingPage)
-    bsObj = BeautifulSoup(html)
+    bsObj = BeautifulSoup(html,"lxml")
     externalLinks = getExternalLinks(bsObj, urlparse(startingPage).netloc)
     if len(externalLinks) == 0:
-        domain = domain = urlparse(startingPage).scheme+"://"+urlparse(startingPage).netloc
+        print("No external links, looking around the site for one")
+        domain = urlparse(startingPage).scheme+"://"+urlparse(startingPage).netloc
         internalLinks = getInternalLinks(bsObj, domain)
-        return getNextExternalLink(internalLinks[random.randint(0,len(internalLinks)-1)])
+        return getRandomExternalLink(internalLinks[random.randint(0,len(internalLinks)-1)])
     else:
         return externalLinks[random.randint(0, len(externalLinks)-1)]
     
@@ -51,5 +52,3 @@ def followExternalOnly(startingSite):
     followExternalOnly(externalLink)
 
 followExternalOnly("http://oreilly.com")
-
-
