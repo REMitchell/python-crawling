@@ -3,8 +3,8 @@ from bs4 import BeautifulSoup
 import re
 
 ##################
-# This crawler gets the most recent "Business and Finance" articles
-# from the Brookings Institute, and prints out their title and lede
+# This crawler gets the most recent "Technology" articles
+# from Reuters, and prints out their title and lede
 # (or the first paragraph)
 #################
 def getArticle(url):
@@ -13,32 +13,29 @@ def getArticle(url):
 	articleObj = BeautifulSoup(html.read(), "lxml")
 	#Get article title. This should have a class name ending in "title"
 	title = articleObj.find("h1").get_text()
-
+	time = articleObj.find("span",{"class":"timestamp"}).get_text()
+	location = ""
+	if articleObj.find("span",{"class":"articleLocation"}):
+		location = articleObj.find("span",{"class":"articleLocation"}).get_text()
 	#Get the main body of the article text
-	body = articleObj.find("div", {"itemprop":"articleBody"})
-	lede = body.find("div", {"class":"lede"})
-	if not lede:
-		#If an official lede does not exist, get the first paragraph
-		lede = body.find("p")
+	body = articleObj.find("span", {"id":"article-text"}).get_text()
+
 	print("TITLE: "+title)
-	metadata = articleObj.find("p", {"class":"metadata"})
-	spans = metadata.findAll("span")
 
-	print("AUTHOR: "+spans[0].get_text())
+	print("AUTHOR: "+time)
 
-
-	print("LEDE: "+lede.get_text())
+	print("LOCATION: "+location)
+	print("BODY: "+body)
 	print("-----------------------------")
 
 for i in range(0, 10):
-	start = str(i*25+1)
-	print("Scraping page: "+str(start)+" of articles")
-	url = "http://www.brookings.edu/research/commentary?topic=Business%20and%20Finance&start="+start+"&sort=ContentDate"
+	print("Scraping page: "+str(i)+" of articles")
+	url = "http://www.reuters.com/news/archive/technologyNews?view=page&page="+str(i)+"&pageSize=10"
 	html = urlopen(url)
 	listingObj = BeautifulSoup(html.read(), "lxml")
-	urls = listingObj.findAll("h3", {"class":"title"})
+	urls = listingObj.findAll("h3", {"class":"story-title"})
 	for url in urls:
 		newPage = url.find("a").attrs['href']
 		#Ignore external URLs
 		if newPage.startswith("/"):
-			getArticle("http://brookings.edu"+newPage)
+			getArticle("http://reuters.com"+newPage)
