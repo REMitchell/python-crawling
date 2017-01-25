@@ -109,7 +109,7 @@ data = open("sites.csv", 'r').read()
 dataFile = StringIO(data)
 siteRows = csv.reader(dataFile)
 
-#Skip the heder line in the CSV file - the header makes it easy to read,
+#Skip the header line in the CSV file - the header makes it easy to read,
 #but we don't want to use the column titles as actual site data
 next(siteRows)
 
